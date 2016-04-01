@@ -51,11 +51,13 @@ public class FileHelper {
 	private FileHelper() {
 		File root_dir = new File(DEFAULT_PATH);
 		if(!root_dir.exists()){
-			root_dir.mkdir();
+			boolean result = root_dir.mkdir();
+			String vvString = "";
 		}
-		File config_dir = new File(DEFAULT_PATH);
+		File config_dir = new File(CONFIG_DIR_PATH);
 		if(!config_dir.exists()){
-			config_dir.mkdir();
+			boolean result = config_dir.mkdir();
+			String vvString = "";
 		}
 	}
     
