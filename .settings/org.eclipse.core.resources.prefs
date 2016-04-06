@@ -1,4 +1,4 @@
 eclipse.preferences.version=1
-encoding//src/com/nationsky/ssolibrary/MainActivity.java=UTF-8
-encoding//src/com/nationsky/ssolibrary/net/HttpHelper.java=UTF-8
-encoding//src/com/nationsky/ssolibrary/net/HttpURLConnectionHelper.java=UTF-8
+encoding//src/com/nationsky/oauthlibrary/MainActivity.java=UTF-8
+encoding//src/com/nationsky/oauthlibrary/net/HttpManager.java=UTF-8
+encoding//src/com/nationsky/oauthlibrary/net/HttpURLConnectionHelper.java=UTF-8
