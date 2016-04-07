@@ -178,7 +178,7 @@ public class HttpURLConnectionHelper {
 				for (int i = 0; i < responseBytes.length; i++) {
 					strbuffer.append("[" + responseBytes[i] + "] ");
 				}
-			LogUtil.i(TAG, "1.6#response_header:" + strbuffer.toString());
+			//LogUtil.i(TAG, "1.6#response_header:" + strbuffer.toString());
 			LogUtil.i(TAG, "1.7#reponse_content:" + bao.toString());
 			return bao.toByteArray();
 		} else {

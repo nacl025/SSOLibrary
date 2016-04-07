@@ -13,8 +13,6 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmlpull.v1.XmlSerializer;
 
-import com.nationsky.oauthlibrary.RemoteInfo;
-
 import android.os.Environment;
 import android.util.Xml;
 
@@ -35,7 +33,7 @@ public class FileUtil {
     private final static String CONFIG_XML_REMOTE_ADDRESS = "address";
     
     
-	public static List<RemoteInfo> readConfig(){
+	public static List<String> readConfig(){
 		File file = new File(CONFIG_FILE_PATH);
 		try {
 			if(!file.exists()){
@@ -50,36 +48,30 @@ public class FileUtil {
 		return null;
 	}
 	
-	private static List<RemoteInfo> getRemoteInfo(InputStream xml) throws Exception {
-		List<RemoteInfo> list = new ArrayList<RemoteInfo>();
-		RemoteInfo remote = null;
+	private static List<String> getRemoteInfo(InputStream xml) throws Exception {
+		List<String> list = new ArrayList<String>();
 		XmlPullParser pullParser = Xml.newPullParser();
 		pullParser.setInput(xml, "UTF-8"); // 为Pull解释器设置要解析的XML数据
 		int event = pullParser.getEventType();
-
+		String address = "";
 		while (event != XmlPullParser.END_DOCUMENT) {
 			switch (event) {
 			case XmlPullParser.START_DOCUMENT:
 				break;
 			case XmlPullParser.START_TAG:
 				if (CONFIG_XML_REMOTE.equals(pullParser.getName())) {
-					remote = new RemoteInfo();
-				}
-				if (CONFIG_XML_REMOTE_KEY.equals(pullParser.getName())) {
-					String key = pullParser.nextText();
-					remote.key = key;
+
 				}
 				if (CONFIG_XML_REMOTE_ADDRESS.equals(pullParser.getName())) {
 					String tmp = pullParser.nextText();
-					String address = DesCryptUtil.decryption(tmp);
-					remote.address = address;
+					address = DesCryptUtil.decryption(tmp);
 				}
 				break;
 
 			case XmlPullParser.END_TAG:
 				if (CONFIG_XML_REMOTE.equals(pullParser.getName())) {
-					list.add(remote);
-					remote = null;
+					list.add(address);
+					address = "";
 				}
 				break;
 			}
@@ -88,7 +80,7 @@ public class FileUtil {
 		return list;
 	}
 	
-	public static void writeConfig(List<RemoteInfo> list) {
+	public static void writeConfig(List<String> list) {
 		if (list == null || list.size() == 0)
 			return;
 		File file = new File(CONFIG_FILE_PATH);		
@@ -106,7 +98,7 @@ public class FileUtil {
 		}
 	}
 	
-	private static String getRemoteString(List<RemoteInfo> list) {
+	private static String getRemoteString(List<String> list) {
 		StringWriter stringWriter = new StringWriter();
 		try {
 			XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
@@ -116,15 +108,11 @@ public class FileUtil {
 			xmlSerializer.startDocument("utf-8", true);
 			xmlSerializer.startTag(null, CONFIG_XML_ROOT);
 
-			for (RemoteInfo remoteInfo : list) {
+			for (String address : list) {
 				xmlSerializer.startTag(null, CONFIG_XML_REMOTE);
 				
-				xmlSerializer.startTag(null, CONFIG_XML_REMOTE_KEY);
-				xmlSerializer.text(remoteInfo.key);
-				xmlSerializer.endTag(null, CONFIG_XML_REMOTE_KEY);
-				
 				xmlSerializer.startTag(null, CONFIG_XML_REMOTE_ADDRESS);
-				String tmp = DesCryptUtil.encryption(remoteInfo.address);
+				String tmp = DesCryptUtil.encryption(address);
 				xmlSerializer.text(tmp);
 				xmlSerializer.endTag(null, CONFIG_XML_REMOTE_ADDRESS);
 				
@@ -157,7 +145,8 @@ public class FileUtil {
 		File token = new File(tokenPath);		
 		try {
 			createParentDir(token);
-			token.deleteOnExit();
+			if (token.exists())
+				token.delete();
 			token.createNewFile();
 			FileOutputStream out = new FileOutputStream(token);
 			String tmp = DesCryptUtil.encryption(tokenValue);
@@ -192,7 +181,8 @@ public class FileUtil {
 		String tokenPath = ROOT_PATH + dirName + "/" + TOKEN_FILE;
 		File token = new File(tokenPath);
 		try {
-			token.deleteOnExit();
+			if (token.exists())
+				token.delete();
 		} catch (Exception e) {
 			e.printStackTrace();
 			LogUtil.e(TAG, e);

@@ -87,8 +87,14 @@ public class DesCryptUtil {
 	 * @return ¼ÓÃÜºóµÄ×Ö·û´®
 	 * @throws Exception
 	 */
-	public static String encryption(String strIn) throws Exception {
-		return byteArr2HexStr(encrypt(strIn.getBytes()));
+	public static String encryption(String strIn){
+		String tmp = strIn;
+		try {
+			tmp = byteArr2HexStr(encrypt(strIn.getBytes()));
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return tmp;
 	}
 
 	/**

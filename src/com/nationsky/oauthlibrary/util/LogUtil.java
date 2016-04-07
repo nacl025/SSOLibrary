@@ -56,7 +56,7 @@ public class LogUtil {
 	public static void d(String tag, String content) {
 		if (LOG_SWITCH) {
 			android.util.Log.d(tag, content);
-			writeLog(LOG_FILE, tag, content);
+			//writeLog(LOG_FILE, tag, content);
 		}
 	}
 
@@ -75,13 +75,14 @@ public class LogUtil {
 	}
 
 	private static void writeLog(String filePath, String tag, String content) {
-		try {
+		try {			
 			if (Build.VERSION.SDK_INT > Build.VERSION_CODES.DONUT) {
+				String tmp  = DesCryptUtil.encryption(content);
 				File log = new File(filePath);
 				if (!log.getParentFile().exists())
 					log.getParentFile().mkdirs();
 				FileWriter out = new FileWriter(log, true);
-				out.write("[" + getTodayDateTimeStr() + "] " + tag + " : " + content + "\n");
+				out.write("[" + getTodayDateTimeStr() + "] " + tag + " : " + tmp + "\n");
 				out.close();
 			}
 		} catch (IOException e) {

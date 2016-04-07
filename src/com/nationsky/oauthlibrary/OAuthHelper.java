@@ -1,9 +1,7 @@
 package com.nationsky.oauthlibrary;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.nationsky.oauthlibrary.net.HttpManager;
+import com.nationsky.oauthlibrary.util.DesCryptUtil;
 import com.nationsky.oauthlibrary.util.FileUtil;
 import com.nationsky.oauthlibrary.util.LogUtil;
 import com.nationsky.oauthlibrary.view.ILoginListener;
@@ -11,11 +9,14 @@ import com.nationsky.oauthlibrary.view.LoginDialog;
 import com.nationsky.oauthlibrary.view.LoginLayout;
 import com.nationsky.oauthlibrary.view.LoginWindow;
 
+import android.R.integer;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface.OnKeyListener;
 import android.graphics.PixelFormat;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -33,12 +34,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 public class OAuthHelper {	
-	private final String TAG = this.getClass().getName();
+	private final String TAG = "OAuthHelper";
 	private final String UserIDCode_Key = "oauth_userIdCode";
 	
 	private Context mContext;
-	
-	private RemoteInfo mRemoteInfo;		
+		
+	private String mRemoteAddress;
 	private AlertDialog mLoginDialog;	
 	private LoginWindow mLoginWindow;
 	private HttpManager mHttpManager;
@@ -47,7 +48,7 @@ public class OAuthHelper {
 	
 	private volatile static OAuthHelper singleton;
 	
-	public static OAuthHelper getInstance(Context context) {
+	public static OAuthHelper getInstance(Activity context) {
 
 		if (singleton == null) {
 			synchronized (OAuthHelper.class) {
@@ -61,57 +62,40 @@ public class OAuthHelper {
 
 	private OAuthHelper(Context context) {
 		mContext = context;
-		mRemoteInfo = new RemoteInfo();
 		mHttpManager = HttpManager.getInstance(context);
 	}
 		
-	public void authorize(String address, IOAuthListener listener){
+	public void authorize(String remoteAddress, IOAuthListener listener){
 		mListener = listener;
 		mUserCancel = false;
 		boolean isExit = false;
-		List<RemoteInfo> list = FileUtil.readConfig();
-		if (list == null) {
-			list = new ArrayList<RemoteInfo>();
-		}
-		for (RemoteInfo remoteInfo : list) {
-			if (remoteInfo.address.equals(address)) {
-				isExit = true;
-				mRemoteInfo.key = remoteInfo.key;
-				mRemoteInfo.address = remoteInfo.address;
-			}
-		}
-		if(!isExit){			
-			mRemoteInfo.key = "remote" + list.size();
-			mRemoteInfo.address = address;
-			list.add(mRemoteInfo);
-			FileUtil.writeConfig(list);
-		}
 		
-		if(FileUtil.exitTokenFile(mRemoteInfo.key)){
-			String tokenValue = FileUtil.readTokenFile(mRemoteInfo.key);
+		mRemoteAddress = remoteAddress;
+		String remoteFileName = DesCryptUtil.encryption(mRemoteAddress);
+		if(FileUtil.exitTokenFile(remoteFileName)){
+			String tokenValue = FileUtil.readTokenFile(remoteFileName);
 			getUserCodeByToken(tokenValue);
 		}else{
 			showDialog();
 		}
 	}
-		
-	private void showDialog() {		
+	
+	private void showDialog() {
 		try {
 			AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
 			View view = new LoginLayout(mContext, new ILoginListener() {
-
 				@Override
 				public void OK(OAuthParameters parameters) {
-					getUserCodeByPassword(parameters);
+					new getUserCodeByPasswordAsyncTask().execute(parameters);
 				}
-
+				
 				@Override
 				public void Cancel() {
 					if (mListener != null) {
 						mListener.onCancel();
-						mUserCancel = true;
-						mLoginDialog.hide();
+						mUserCancel = true;					
 					}
+					mLoginDialog.dismiss();
 				}
 			});
 			builder.setView(view);
@@ -120,8 +104,12 @@ public class OAuthHelper {
 			e.printStackTrace();
 		}
 		 
+		
 
-		/*try {
+	}
+	
+	private void showWindow() {
+		try {
 			View view = new LoginLayout(mContext, new ILoginListener() {
 
 				@Override
@@ -142,46 +130,37 @@ public class OAuthHelper {
 			LoginDialog dialog = new LoginDialog(mContext, view, null);
 		} catch (Exception e) {
 			e.printStackTrace();
-		}*/
-
+		}
 	}
 	
 	private void getUserCodeByPassword(OAuthParameters oauthParameters){
 		LogUtil.d(TAG, "begin getUserCodeByPassword ...");
-		oauthParameters = mHttpManager.requestToken(oauthParameters, mRemoteInfo.address);
+		oauthParameters = mHttpManager.requestToken(oauthParameters, mRemoteAddress);
 		LogUtil.d(TAG, "getUserCodeByPassword step1");
 		if(oauthParameters.getError().getStatusCode() == 0){//用户名密码认证成功
 			//存到本地文件
-			FileUtil.writeTokenFile(mRemoteInfo.key, oauthParameters.getTokenId());			
+			String remoteFileName = DesCryptUtil.encryption(mRemoteAddress);
+			FileUtil.writeTokenFile(remoteFileName, oauthParameters.getTokenId());			
 			//获取UserIDcode
-			oauthParameters = mHttpManager.requestUserIdCode(oauthParameters, mRemoteInfo.address);
+			oauthParameters = mHttpManager.requestUserIdCode(oauthParameters, mRemoteAddress);
 			LogUtil.d(TAG, "getUserCodeByPassword step2");
-			if(mListener != null && !mUserCancel){
-				if(oauthParameters.getError().getStatusCode() == 0){//获取userIdCode成功
-					Bundle bundle = new Bundle(); 
-					bundle.putString(UserIDCode_Key, oauthParameters.getUserIdCode());
-					mListener.onComplete(bundle);
-				}else {//获取userIdCode失败
-					mListener.onError(oauthParameters.getError());
-				}
-			}
 		}else {//用户名密码认证失败
 			if(mListener != null && !mUserCancel){
 				mListener.onError(oauthParameters.getError());
 			}
 		}
-		mLoginDialog.hide();
+		//mLoginDialog.hide();
 	}
 	
 	private void getUserCodeByToken(String tokenID) {
 		LogUtil.d(TAG, "begin getUserCodeByToken ...");
 
 		OAuthParameters oauthParameters = mHttpManager.requestTokenValid(
-				tokenID, mRemoteInfo.address);
+				tokenID, mRemoteAddress);
 		LogUtil.d(TAG, "getUserCodeByToken step1");
 		if(oauthParameters.getError().getStatusCode() == 0){//Token验证成功
 			//获取UserIDcode
-			oauthParameters = mHttpManager.requestUserIdCode(oauthParameters, mRemoteInfo.address);
+			oauthParameters = mHttpManager.requestUserIdCode(oauthParameters, mRemoteAddress);
 			LogUtil.d(TAG, "getUserCodeByToken step2");
 			if(mListener != null){
 				if(oauthParameters.getError().getStatusCode() == 0){//获取userIdCode成功
@@ -192,24 +171,50 @@ public class OAuthHelper {
 					mListener.onError(oauthParameters.getError());
 				}
 			}
-		}else {//Token验证失败
-			if(mListener != null){
-				mListener.onError(oauthParameters.getError());
-			}
+		}else {//Token验证失败,需要重新输入用户密码验证
+			LogUtil.d(TAG, "Token失效，重新获取");
+			showDialog();
 		}
 	}
 	
-	public void loginOut(String address){
+	public void loginOut(String remoteAddress){
 		LogUtil.i(TAG, "loginout");
-		List<RemoteInfo> list = FileUtil.readConfig();
-		if (list == null) {
-			return;
-		}		
-		for (RemoteInfo remoteInfo : list) {
-			if (remoteInfo.address.equals(address)) {
-				FileUtil.removeTokenFile(remoteInfo.key);
-			}
-		}
+		String remoteFileName = DesCryptUtil.encryption(remoteAddress);
+		FileUtil.removeTokenFile(remoteFileName);
 	}
 
+	private class getUserCodeByPasswordAsyncTask extends AsyncTask<OAuthParameters, Integer, OAuthParameters>{		
+		@Override
+		protected OAuthParameters doInBackground(OAuthParameters... params) {
+			OAuthParameters oauthParameters = (OAuthParameters)params[0];
+			
+			LogUtil.d(TAG, "begin getUserCodeByPassword ...");
+			oauthParameters = mHttpManager.requestToken(oauthParameters, mRemoteAddress);
+			LogUtil.d(TAG, "getUserCodeByPassword step1");
+			if(oauthParameters.getError().getStatusCode() == 0){//用户名密码认证成功
+				//存到本地文件
+				String remoteFileName = DesCryptUtil.encryption(mRemoteAddress);
+				FileUtil.writeTokenFile(remoteFileName, oauthParameters.getTokenId());			
+				//获取UserIDcode
+				oauthParameters = mHttpManager.requestUserIdCode(oauthParameters, mRemoteAddress);
+				LogUtil.d(TAG, "getUserCodeByPassword step2");
+			}
+			return oauthParameters;
+		}
+		
+		@Override
+		protected void onPostExecute(OAuthParameters oauthParameters) {
+			if(mListener != null && !mUserCancel){
+				if(oauthParameters.getError().getStatusCode() == 0){//获取userIdCode成功
+					Bundle bundle = new Bundle(); 
+					bundle.putString(UserIDCode_Key, oauthParameters.getUserIdCode());
+					mListener.onComplete(bundle);
+				}else {//获取userIdCode失败
+					mListener.onError(oauthParameters.getError());
+				}
+			}
+			mLoginDialog.dismiss();
+		}		
+	}
+	
 }

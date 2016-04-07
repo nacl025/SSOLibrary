@@ -5,16 +5,6 @@
     tools:context="${relativePackage}.${activityClass}" >
 
     <Button
-        android:id="@+id/button1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginLeft="51dp"
-        android:layout_marginTop="19dp"
-        android:text="Button" />
-
-    <Button
         android:id="@+id/button2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -31,6 +21,24 @@
         android:layout_alignBottom="@+id/button2"
         android:layout_marginLeft="24dp"
         android:layout_toRightOf="@+id/button2"
+        android:text="Button" />
+
+    <Button
+        android:id="@+id/button4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/button1"
+        android:layout_alignLeft="@+id/button3"
+        android:text="Button" />
+
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="42dp"
+        android:layout_marginTop="20dp"
         android:text="Button" />
 
 </RelativeLayout>

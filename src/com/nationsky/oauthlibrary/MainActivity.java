@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.Toast;
 
 public class MainActivity extends Activity implements OnClickListener {
 
@@ -36,84 +37,36 @@ public class MainActivity extends Activity implements OnClickListener {
 		
 		findViewById(R.id.button2).setOnClickListener(this);
 		findViewById(R.id.button3).setOnClickListener(this);
+		findViewById(R.id.button4).setOnClickListener(this);
 	}
 	
 	@Override
 	public void onClick(View v) {
-
-		/*HttpManager helper = HttpManager.getInstance(getApplicationContext());
-		OAuthParameters parameter = new OAuthParameters();
-		parameter.setUserName("demo1");
-		parameter.setPassword("123456");
-		try {
-			helper.requestToken(parameter, "211.90.37.33:8081");
-			//helper.isTokenValid("AQIC5wM2LY4SfczwweU67BLFhTkqnpzP5c_gecOdTlBfikg.*AAJTSQACMDIAAlNLABM1ODgxMzU4MTk4NzAyMzgwODAwAAJTMQACMDE.*");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}*/
-		//loginByGet();
-		
-		/*OAuthHelper oAuthHelper  = OAuthHelper.getInstance(this);
-		oAuthHelper.authorize("211.90.37.33:8081", new IOAuthListener() {
-			
-			@Override
-			public void onError(OAuthError error) {
-				 String vvString = "";
-				 String vvString1 = "";
-				
-			}
-			
-			@Override
-			public void onComplete(Bundle values) {
-				String vvString = "";
-				 String vvString1 = "";
-				
-			}
-			
-			@Override
-			public void onCancel() {
-				String vvString = "";
-				 String vvString1 = "";
-				
-				
-			}
-		});*/
-		
-		/*try {
-			View view = new LoginLayout(this);
-			mLoginWindow = new LoginWindow(mContext, view);
-			mLoginWindow.show();
-			LoginDialog dialog = new LoginDialog(this, view, null);
-			dialog.show();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}*/
-		
-		
-		
+		OAuthHelper oAuthHelper  = OAuthHelper.getInstance(this);
 		switch (v.getId()) {
 		case R.id.button1:
-			OAuthHelper oAuthHelper  = OAuthHelper.getInstance(this);
+			
 			oAuthHelper.authorize("211.90.37.33:8081", new IOAuthListener() {
 				
 				@Override
 				public void onError(OAuthError error) {
-					 String vvString = "";
-					 String vvString1 = "";
+					Toast.makeText(getApplicationContext(),
+							"Error:" + error.getStatusCode(), Toast.LENGTH_LONG).show();
 					
 				}
 				
 				@Override
 				public void onComplete(Bundle values) {
-					String vvString = "";
-					 String vvString1 = "";
+					String userCode = values.getString("oauth_userIdCode");
+					Toast.makeText(getApplicationContext(),
+							"UserCode:" + userCode, Toast.LENGTH_LONG).show();
 					
 				}
 				
 				@Override
 				public void onCancel() {
-					String vvString = "";
-					 String vvString1 = "";
+					Toast.makeText(getApplicationContext(),
+							"UserCancle", Toast.LENGTH_LONG).show();
 					
 					
 				}
@@ -125,7 +78,9 @@ public class MainActivity extends Activity implements OnClickListener {
 		case R.id.button3:
 			String vvString = FileUtil.readTokenFile("remote0");
 			break;
-
+		case R.id.button4:
+			oAuthHelper.loginOut("211.90.37.33:8081");
+			break;
 		default:
 			break;
 		}

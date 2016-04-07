@@ -24,7 +24,6 @@ public class LoginLayout extends LinearLayout {
 	private Context mContext;
 	
 	private ILoginListener mListener;
-	private Handler mHandler;
 	
 	TextView textView_title, textView_validate;
 	EditText editText_name, editText_pass;
@@ -149,11 +148,6 @@ public class LoginLayout extends LinearLayout {
 
 	}
 	
-	public LoginLayout(Context context, Handler handler){
-		this(context);
-		mHandler = handler;		
-	}
-	
 	public LoginLayout(Context context, ILoginListener listener) {
 		this(context);
 		mListener = listener;
@@ -185,18 +179,13 @@ public class LoginLayout extends LinearLayout {
 			parameters.setPassword(editText_pass.getText().toString());
 			String error = checkInput(parameters.getUserName(), parameters.getPassword());
 			if (TextUtils.isEmpty(error)) {
-				if (mHandler != null) {
-					Message message = mHandler.obtainMessage(0, parameters);
-					mHandler.sendMessage(message);
-
-				} else if (mListener != null) {
-					mListener.OK(parameters);
-				}
-
 				layout_login.setVisibility(View.GONE);
 				bar_login.setVisibility(View.VISIBLE);
 				editText_name.setEnabled(false);
 				editText_pass.setEnabled(false);
+               if (mListener != null) {
+					mListener.OK(parameters);
+				}
 			}else {
 				textView_validate.setText(error);
 			}
@@ -207,10 +196,7 @@ public class LoginLayout extends LinearLayout {
 		
 		@Override
 		public void onClick(View v) {
-			if (mHandler != null) {
-				Message message = mHandler.obtainMessage(1);
-				mHandler.sendMessage(message);
-			} else if (mListener != null) {
+			if (mListener != null) {
 				mListener.Cancel();
 			}
 		}
