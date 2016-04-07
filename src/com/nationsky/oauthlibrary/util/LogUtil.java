@@ -18,7 +18,7 @@ public class LogUtil {
 	private static final String DEFAULT_SD_PATH = Environment
 			.getExternalStorageDirectory().toString();
 	private static final String DEFAULT_PATH = DEFAULT_SD_PATH + "/OAuth/";
-	 public static final String LOG_FILE = DEFAULT_PATH + "Log/log";
+	 public static final String LOG_FILE = DEFAULT_PATH + "Log/";
 
 	public static void d(String tag, Throwable e) {
 		if (LOG_SWITCH) {
@@ -75,7 +75,8 @@ public class LogUtil {
 	}
 
 	private static void writeLog(String filePath, String tag, String content) {
-		try {			
+		try {	
+			filePath = filePath + getTodayDateStr();
 			if (Build.VERSION.SDK_INT > Build.VERSION_CODES.DONUT) {
 				String tmp  = DesCryptUtil.encryption(content);
 				File log = new File(filePath);
@@ -91,5 +92,9 @@ public class LogUtil {
 	
 	private static String getTodayDateTimeStr() {
 		 return DateFormat.format("yyyy-MM-dd kk:mm:ss", new Date().getTime()).toString();
+	}
+	
+	private static String getTodayDateStr() {
+		 return DateFormat.format("yyyy-MM-dd", new Date().getTime()).toString();
 	}
 }
