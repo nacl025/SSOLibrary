@@ -12,8 +12,10 @@ import com.nationsky.oauthlibrary.view.LoginWindow;
 import android.R.integer;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface.OnKeyListener;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
@@ -26,11 +28,13 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 public class OAuthHelper {	
@@ -40,7 +44,7 @@ public class OAuthHelper {
 	private Context mContext;
 		
 	private String mRemoteAddress;
-	private AlertDialog mLoginDialog;	
+	private Dialog mLoginDialog;	
 	private LoginWindow mLoginWindow;
 	private HttpManager mHttpManager;
 	private IOAuthListener mListener;
@@ -76,13 +80,12 @@ public class OAuthHelper {
 			String tokenValue = FileUtil.readTokenFile(remoteFileName);
 			getUserCodeByToken(tokenValue);
 		}else{
-			showDialog();
+			showLoginDialog();
 		}
 	}
-	
-	private void showDialog() {
-		try {
-			AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+		
+	private void showLoginDialog() {
+		try {		
 			View view = new LoginLayout(mContext, new ILoginListener() {
 				@Override
 				public void OK(OAuthParameters parameters) {
@@ -98,16 +101,14 @@ public class OAuthHelper {
 					mLoginDialog.dismiss();
 				}
 			});
-			builder.setView(view);
-			mLoginDialog = builder.show();
+			mLoginDialog = new LoginDialog(mContext,view);			
+			mLoginDialog.show();			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		 
-		
-
 	}
-	
+		
 	private void showWindow() {
 		try {
 			View view = new LoginLayout(mContext, new ILoginListener() {
@@ -127,7 +128,6 @@ public class OAuthHelper {
 			});
 			mLoginWindow = new LoginWindow(mContext, view);
 			mLoginWindow.show();
-			LoginDialog dialog = new LoginDialog(mContext, view, null);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -173,7 +173,7 @@ public class OAuthHelper {
 			}
 		}else {//Token验证失败,需要重新输入用户密码验证
 			LogUtil.d(TAG, "Token失效，重新获取");
-			showDialog();
+			showLoginDialog();
 		}
 	}
 	

@@ -39,7 +39,7 @@ public class LoginLayout extends LinearLayout {
 				LinearLayout.LayoutParams.MATCH_PARENT,
 				LinearLayout.LayoutParams.MATCH_PARENT);
 		this.setLayoutParams(params1);
-		//this.setBackgroundColor(Color.parseColor("#8C8C8C"));
+		this.setBackgroundColor(Color.parseColor("#EDEDED"));
 		this.setOrientation(LinearLayout.VERTICAL);
 
 		// Í·±ê

@@ -32,16 +32,16 @@ public class MainActivity extends Activity implements OnClickListener {
 	
 	private void initView(){
 		
-		Button button1  = (Button)findViewById(R.id.button1);
+		/*Button button1  = (Button)findViewById(R.id.button1);
 		button1.setOnClickListener(this);
 		
 		findViewById(R.id.button2).setOnClickListener(this);
 		findViewById(R.id.button3).setOnClickListener(this);
-		findViewById(R.id.button4).setOnClickListener(this);
+		findViewById(R.id.button4).setOnClickListener(this);*/
 	}
 	
 	@Override
-	public void onClick(View v) {
+	public void onClick(View v) {/*
 		OAuthHelper oAuthHelper  = OAuthHelper.getInstance(this);
 		switch (v.getId()) {
 		case R.id.button1:
@@ -84,7 +84,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		default:
 			break;
 		}
-	}
+	*/}
 	   
     
 }

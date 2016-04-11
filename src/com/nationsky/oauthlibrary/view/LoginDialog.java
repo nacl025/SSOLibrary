@@ -1,61 +1,54 @@
 package com.nationsky.oauthlibrary.view;
 
 import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
-import android.view.KeyEvent;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.ViewGroup.LayoutParams;
+
 
 public class LoginDialog extends Dialog{
 
 	private static int theme = android.R.style.Theme_Translucent_NoTitleBar;
-
-	private ProgressDialog mSpinner;
-	protected WindowManager.LayoutParams mLayoutParams;
 	protected View mView;
+	private Context mContext;
 	
-	public LoginDialog(Context context, View view, ILoginListener listener) {
+	public LoginDialog(Context context, View view) {
 		super(context, theme);
+		mContext = context;
         mView = view;
 	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		mSpinner = new ProgressDialog(getContext());
-		mSpinner.requestWindowFeature(Window.FEATURE_NO_TITLE);
-		mSpinner.setMessage("Loading...");
-		mSpinner.setOnKeyListener(new OnKeyListener() {
-
-			@Override
-			public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
-				onBackPressed();
-				return false;
-			}
-
-		});
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		this.getWindow().setFeatureDrawableAlpha(Window.FEATURE_OPTIONS_PANEL, 0);  
-
-		addContentView(mView, new LayoutParams(LayoutParams.MATCH_PARENT,
-				LayoutParams.MATCH_PARENT));
+		
+		WindowManager.LayoutParams lp = this.getWindow().getAttributes();
+		lp.gravity = Gravity.CENTER;
+		lp.width = dip2px(mContext,400); // 宽度  不设定宽高的话，无法设置垂直居中
+		lp.height = dip2px(mContext,300); // 高度
+		this.getWindow().setAttributes(lp);
+		
+		LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT,
+				LayoutParams.WRAP_CONTENT);	
+		addContentView(mView, params);
+				
+	}
+	
+	/**
+	 * 根据手机的分辨率从 dp 的单位 转成为 px(像素)
+	 */
+	private int dip2px(Context context, float dpValue) {
+		final float scale = context.getResources().getDisplayMetrics().density;
+		return (int) (dpValue * scale + 0.5f);
 	}
 	
 	@Override
 	public void onBackPressed() {
-		try {
-			mSpinner.dismiss();
-/*			if (null != mView) {
-				mWebView.stopLoading();
-				mView.destroy();
-			}*/
-		} catch (Exception e) {
-		}
-		dismiss();
+		return;
 	}
 }
