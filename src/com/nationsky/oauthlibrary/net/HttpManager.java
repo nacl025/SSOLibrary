@@ -49,19 +49,24 @@ public class HttpManager {
 			sb.append("&uri=service=initService");
 			LogUtil.i(TAG, "send data to oauth server(URL),this url is getToken: "
 					+ sb.toString());
-			String response = sendRequest(sb.toString());
-			if(TextUtils.isEmpty(response)){				
-				OAuthError error = new OAuthError(100);
-				oauthParameters.setError(error);
-			}else {
-				LogUtil.i(TAG, "GetToken Respones" + response);
-				String[] tokenId = response.split("=");
+			ResponseInfo response = sendRequest(sb.toString());
+			if (response.responseCode == 200) {
+				LogUtil.i(TAG, "GetToken Respones:" + response);
+				String[] tokenId = response.responseString.split("=");
 				if (tokenId.length > 1 && !tokenId[1].equals("")) {
 					oauthParameters.setTokenId(tokenId[1]);
 				}else {
 					OAuthError error = new OAuthError(100);
 					oauthParameters.setError(error);
-				}			
+				}		
+			} else {
+				if (response.responseCode == HttpURLConnectionHelper.connectExceptionFlag) {
+					OAuthError error = new OAuthError(301);
+					oauthParameters.setError(error);
+				} else {
+					OAuthError error = new OAuthError(100);
+					oauthParameters.setError(error);
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -88,20 +93,26 @@ public class HttpManager {
 					TAG,
 					"send data to oauth server(URL),this url is isTokenValid: "
 							+ sb.toString());
-			String response = sendRequest(sb.toString());
-			if (TextUtils.isEmpty(response)) {
-				OAuthError error = new OAuthError(101);
-				oauthParameters.setError(error);
-			} else {
-				LogUtil.i(TAG, "isTokenValid Respones" + response);
+			
+			ResponseInfo response = sendRequest(sb.toString());
+			if (response.responseCode == 200) {
+				LogUtil.i(TAG, "isTokenValid Respones:" + response);
 
-				String[] result = response.replaceAll("\r|\n", "").split("=");
-				if (response.length() > 1 && result[1].equals("true")) {
+				String[] result = response.responseString.replaceAll("\r|\n", "").split("=");
+				if (result.length > 1 && result[1].equals("true")) {
                    oauthParameters.setTokenId(tokenId);
 				} else {
 					OAuthError error = new OAuthError(101);
 					oauthParameters.setError(error);
-				}					
+				}		
+			} else {
+				if (response.responseCode == HttpURLConnectionHelper.connectExceptionFlag) {
+					OAuthError error = new OAuthError(301);
+					oauthParameters.setError(error);
+				} else {
+					OAuthError error = new OAuthError(101);
+					oauthParameters.setError(error);
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -112,12 +123,14 @@ public class HttpManager {
 		return oauthParameters;
 	}
 	
-	public OAuthParameters requestUserIdCode(OAuthParameters oauthParameters, String... address){
+	public OAuthParameters requestUserIdCode(OAuthParameters oauthParameters,
+			String... address) {
 		try {
 			StringBuilder sb = null;
-			String tokenId = oauthParameters.getTokenId().replaceAll("\r|\n", "");
+			String tokenId = oauthParameters.getTokenId().replaceAll("\r|\n",
+					"");
 			sb = new StringBuilder("http://");
-			if(!TextUtils.isEmpty(address[0])){
+			if (!TextUtils.isEmpty(address[0])) {
 				mAddress = address[0];
 			}
 			sb.append(mAddress);
@@ -126,16 +139,21 @@ public class HttpManager {
 			sb.append(tokenId);
 			sb.append("&attributenames=useridcode");
 			LogUtil.i(TAG, "send data to oauth server(URL): " + sb.toString());
-			String response = sendRequest(sb.toString());
-			if (TextUtils.isEmpty(response)) {
-				OAuthError error = new OAuthError(102);
-				oauthParameters.setError(error);
-			} else {
-				LogUtil.i(TAG, "getUserIdCode Respones" + response);
-				String[] userIdCode = response.split("=");
+			ResponseInfo response = sendRequest(sb.toString());
+			if (response.responseCode == 200) {
+				LogUtil.i(TAG, "getUserIdCode Respones：" + response);
+				String[] userIdCode = response.responseString.split("=");
 				if (userIdCode.length > 1 && !userIdCode[3].equals("")) {
 					oauthParameters.setUserIdCode(userIdCode[3]);
-				}else {
+				} else {
+					OAuthError error = new OAuthError(102);
+					oauthParameters.setError(error);
+				}
+			} else {
+				if (response.responseCode == HttpURLConnectionHelper.connectExceptionFlag) {
+					OAuthError error = new OAuthError(301);
+					oauthParameters.setError(error);
+				} else {
 					OAuthError error = new OAuthError(102);
 					oauthParameters.setError(error);
 				}
@@ -145,11 +163,11 @@ public class HttpManager {
 			LogUtil.e(TAG, e);
 			OAuthError error = new OAuthError(102);
 			oauthParameters.setError(error);
-		}		
+		}
 		return oauthParameters;
 	}
 
-	private String sendRequest(String url){
+	private ResponseInfo sendRequest(String url){
 		
 		mHttp.setUrl(url);
 		mHttp.reset();
@@ -164,18 +182,17 @@ public class HttpManager {
 				
 			}
 		}.start();
-		int responseCode = mHttp.getResponseCode();
-		if (responseCode != 200) {
-			LogUtil.i(TAG, "ResponesCode is not 200");
-			return null;
-		}
+		ResponseInfo responseInfo = new ResponseInfo();		
+		responseInfo.responseCode = mHttp.getResponseCode();
 		byte[] responseByte = mHttp.getResponseBytes();
-		if (responseByte == null) {
-			LogUtil.i(TAG, "ResponesByte is null");
-			return null;
-		}
-		String responseString = new String(responseByte);
-		return responseString;
+		if (responseByte != null)
+			responseInfo.responseString = new String(responseByte);
+		return responseInfo;
+	}
+
+	private class ResponseInfo{
+		public int responseCode;
+		public String responseString;
 	}
 }
 

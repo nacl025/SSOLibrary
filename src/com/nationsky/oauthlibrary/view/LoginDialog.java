@@ -25,18 +25,23 @@ public class LoginDialog extends Dialog{
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		
+		requestWindowFeature(Window.FEATURE_NO_TITLE);					
+	}
+	
+	@Override
+	protected void onStart() {
+		super.onStart();
+		//====注意：下面代码必须放在onStart内，如果放在onCreate会产生Unable to add window异常====
 		WindowManager.LayoutParams lp = this.getWindow().getAttributes();
 		lp.gravity = Gravity.CENTER;
 		lp.width = dip2px(mContext,400); // 宽度  不设定宽高的话，无法设置垂直居中
 		lp.height = dip2px(mContext,300); // 高度
 		this.getWindow().setAttributes(lp);
 		
+		
 		LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT,
 				LayoutParams.WRAP_CONTENT);	
 		addContentView(mView, params);
-				
 	}
 	
 	/**

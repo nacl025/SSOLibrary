@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -28,12 +29,13 @@ public class HttpURLConnectionHelper {
 	private static final int httpConnectionReadTimeout = 60000;
 	private static final int NET_BUFFER_SIZE = 512;
 	private static final int NET_MAX_SIZE = 1024 * 1024 * 10;
+	public static final int connectExceptionFlag = -999;
 	
 	// 请求数据
 	private byte[] requestbytes;
 	// 回应数据
 	private byte[] responsebytes;
-	// 返回码
+	// 返回码  初始值-1 网络异常 -999
 	private int responseCode;	
 	// 传�?�是否完成标�?
 	private boolean finish = false;
@@ -96,11 +98,17 @@ public class HttpURLConnectionHelper {
 			LogUtil.i(TAG, "1.4#responseCode:" + responseCode);
 			responsebytes = this.getDataFromServer(httpCon, responseCode);
 			this.success = true; // 传输成功
+		} catch (ConnectException ce){
+			ce.printStackTrace();
+			LogUtil.e(TAG, "sendRequest error:" + ce.getMessage());
+			responseCode = connectExceptionFlag;
+			//printNetworkState(context);
+			this.success = false; // 传输失败
 		} catch (Exception e) {
 			e.printStackTrace();
 			LogUtil.e(TAG, "sendRequest error:" + e.getMessage());
 			LogUtil.e(TAG, e.getStackTrace().toString());
-			printNetworkState(context);
+			//printNetworkState(context);
 			this.success = false; // 传输失败
 		} finally {
 			this.finish = true; // 传输完成，无论成功与失败�?

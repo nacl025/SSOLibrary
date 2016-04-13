@@ -1,6 +1,7 @@
 package com.nationsky.oauthlibrary;
 
 import com.nationsky.oauthlibrary.net.HttpManager;
+import com.nationsky.oauthlibrary.net.HttpURLConnectionHelper;
 import com.nationsky.oauthlibrary.util.DesCryptUtil;
 import com.nationsky.oauthlibrary.util.FileUtil;
 import com.nationsky.oauthlibrary.util.LogUtil;
@@ -45,7 +46,6 @@ public class OAuthHelper {
 		
 	private String mRemoteAddress;
 	private Dialog mLoginDialog;	
-	private LoginWindow mLoginWindow;
 	private HttpManager mHttpManager;
 	private IOAuthListener mListener;
 	private boolean mUserCancel;
@@ -101,57 +101,20 @@ public class OAuthHelper {
 					mLoginDialog.dismiss();
 				}
 			});
-			mLoginDialog = new LoginDialog(mContext,view);			
+			if(mLoginDialog != null){
+				mLoginDialog.dismiss();
+				mLoginDialog = null;
+			}			
+			mLoginDialog = new LoginDialog(mContext,view);	
+			Activity activity = mLoginDialog.getOwnerActivity();
 			mLoginDialog.show();			
 		} catch (Exception e) {
 			e.printStackTrace();
+			LogUtil.e(TAG, e);
 		}
 		 
 	}
 		
-	private void showWindow() {
-		try {
-			View view = new LoginLayout(mContext, new ILoginListener() {
-
-				@Override
-				public void OK(OAuthParameters parameters) {
-					getUserCodeByPassword(parameters);
-				}
-
-				@Override
-				public void Cancel() {
-					if (mListener != null) {
-						mListener.onCancel();
-						mUserCancel = true;
-					}
-				}
-			});
-			mLoginWindow = new LoginWindow(mContext, view);
-			mLoginWindow.show();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private void getUserCodeByPassword(OAuthParameters oauthParameters){
-		LogUtil.d(TAG, "begin getUserCodeByPassword ...");
-		oauthParameters = mHttpManager.requestToken(oauthParameters, mRemoteAddress);
-		LogUtil.d(TAG, "getUserCodeByPassword step1");
-		if(oauthParameters.getError().getStatusCode() == 0){//用户名密码认证成功
-			//存到本地文件
-			String remoteFileName = DesCryptUtil.encryption(mRemoteAddress);
-			FileUtil.writeTokenFile(remoteFileName, oauthParameters.getTokenId());			
-			//获取UserIDcode
-			oauthParameters = mHttpManager.requestUserIdCode(oauthParameters, mRemoteAddress);
-			LogUtil.d(TAG, "getUserCodeByPassword step2");
-		}else {//用户名密码认证失败
-			if(mListener != null && !mUserCancel){
-				mListener.onError(oauthParameters.getError());
-			}
-		}
-		//mLoginDialog.hide();
-	}
-	
 	private void getUserCodeByToken(String tokenID) {
 		LogUtil.d(TAG, "begin getUserCodeByToken ...");
 
@@ -162,7 +125,7 @@ public class OAuthHelper {
 			//获取UserIDcode
 			oauthParameters = mHttpManager.requestUserIdCode(oauthParameters, mRemoteAddress);
 			LogUtil.d(TAG, "getUserCodeByToken step2");
-			if(mListener != null){
+			if(mListener != null && !mUserCancel){
 				if(oauthParameters.getError().getStatusCode() == 0){//获取userIdCode成功
 					Bundle bundle = new Bundle(); 
 					bundle.putString(UserIDCode_Key, oauthParameters.getUserIdCode());
@@ -171,9 +134,14 @@ public class OAuthHelper {
 					mListener.onError(oauthParameters.getError());
 				}
 			}
-		}else {//Token验证失败,需要重新输入用户密码验证
-			LogUtil.d(TAG, "Token失效，重新获取");
-			showLoginDialog();
+		}else {//Token验证失败,需要重新输入用户密码验证		
+			if (oauthParameters.getError().getStatusCode() == OAuthError.erroConnectCode) {
+				if (mListener != null)
+					mListener.onError(oauthParameters.getError());
+			} else {
+				LogUtil.d(TAG, "Token失效，重新获取");
+				showLoginDialog();
+			}		
 		}
 	}
 	
