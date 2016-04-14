@@ -39,52 +39,33 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 public class OAuthHelper {	
-	private final String TAG = "OAuthHelper";
-	private final String UserIDCode_Key = "oauth_userIdCode";
-	//wytest 1qazzaq1
-	private Context mContext;
+	private final static String TAG = "OAuthHelper";
+	private final static String UserIDCode_Key = "oauth_userIdCode";
+	private static Context mContext;
 		
-	private String mRemoteAddress;
-	private Dialog mLoginDialog;	
-	private HttpManager mHttpManager;
-	private IOAuthListener mListener;
-	private boolean mUserCancel;
-	
-	private volatile static OAuthHelper singleton;
-	
-	public static OAuthHelper getInstance(Activity context) {
-
-		if (singleton == null) {
-			synchronized (OAuthHelper.class) {
-				if (singleton == null) {
-					singleton = new OAuthHelper(context);
-				}
-			}
-		}
-		return singleton;
-	}
-
-	private OAuthHelper(Context context) {
+	private static String mRemoteAddress;
+	private static Dialog mLoginDialog;	
+	private static IOAuthListener mListener;
+	private static boolean mUserCancel;
+			
+	public static void authorize(Activity context, String remoteAddress, IOAuthListener listener){
 		mContext = context;
-		mHttpManager = HttpManager.getInstance(context);
-	}
-		
-	public void authorize(String remoteAddress, IOAuthListener listener){
 		mListener = listener;
+		mRemoteAddress = remoteAddress;
 		mUserCancel = false;
 		boolean isExit = false;
-		
-		mRemoteAddress = remoteAddress;
+			
 		String remoteFileName = DesCryptUtil.encryption(mRemoteAddress);
 		if(FileUtil.exitTokenFile(remoteFileName)){
 			String tokenValue = FileUtil.readTokenFile(remoteFileName);
-			getUserCodeByToken(tokenValue);
+			//getUserCodeByToken(tokenValue);
+			new getUserCodeByTokenAsyncTask().execute(tokenValue);
 		}else{
 			showLoginDialog();
 		}
 	}
 		
-	private void showLoginDialog() {
+	private static void showLoginDialog() {
 		try {		
 			View view = new LoginLayout(mContext, new ILoginListener() {
 				@Override
@@ -96,34 +77,35 @@ public class OAuthHelper {
 				public void Cancel() {
 					if (mListener != null) {
 						mListener.onCancel();
-						mUserCancel = true;					
+						mUserCancel = true;						
 					}
 					mLoginDialog.dismiss();
+					
 				}
 			});
+			
 			if(mLoginDialog != null){
-				mLoginDialog.dismiss();
-				mLoginDialog = null;
-			}			
-			mLoginDialog = new LoginDialog(mContext,view);	
-			Activity activity = mLoginDialog.getOwnerActivity();
+				mLoginDialog = null;			
+			}
+			mLoginDialog = new LoginDialog(mContext,view);
 			mLoginDialog.show();			
 		} catch (Exception e) {
 			e.printStackTrace();
 			LogUtil.e(TAG, e);
+			mLoginDialog.dismiss();
 		}
 		 
 	}
 		
-	private void getUserCodeByToken(String tokenID) {
+	private static void getUserCodeByToken(String tokenID) {
 		LogUtil.d(TAG, "begin getUserCodeByToken ...");
 
-		OAuthParameters oauthParameters = mHttpManager.requestTokenValid(
+		OAuthParameters oauthParameters = HttpManager.requestTokenValid(
 				tokenID, mRemoteAddress);
 		LogUtil.d(TAG, "getUserCodeByToken step1");
 		if(oauthParameters.getError().getStatusCode() == 0){//Token验证成功
 			//获取UserIDcode
-			oauthParameters = mHttpManager.requestUserIdCode(oauthParameters, mRemoteAddress);
+			oauthParameters = HttpManager.requestUserIdCode(oauthParameters, mRemoteAddress);
 			LogUtil.d(TAG, "getUserCodeByToken step2");
 			if(mListener != null && !mUserCancel){
 				if(oauthParameters.getError().getStatusCode() == 0){//获取userIdCode成功
@@ -145,26 +127,26 @@ public class OAuthHelper {
 		}
 	}
 	
-	public void loginOut(String remoteAddress){
+	public static void loginOut(String remoteAddress){
 		LogUtil.i(TAG, "loginout");
 		String remoteFileName = DesCryptUtil.encryption(remoteAddress);
 		FileUtil.removeTokenFile(remoteFileName);
 	}
 
-	private class getUserCodeByPasswordAsyncTask extends AsyncTask<OAuthParameters, Integer, OAuthParameters>{		
+	private static class getUserCodeByPasswordAsyncTask extends AsyncTask<OAuthParameters, Integer, OAuthParameters>{		
 		@Override
 		protected OAuthParameters doInBackground(OAuthParameters... params) {
 			OAuthParameters oauthParameters = (OAuthParameters)params[0];
 			
 			LogUtil.d(TAG, "begin getUserCodeByPassword ...");
-			oauthParameters = mHttpManager.requestToken(oauthParameters, mRemoteAddress);
+			oauthParameters = HttpManager.requestToken(oauthParameters, mRemoteAddress);
 			LogUtil.d(TAG, "getUserCodeByPassword step1");
-			if(oauthParameters.getError().getStatusCode() == 0){//用户名密码认证成功
+			if(oauthParameters.getError().getStatusCode() == 0 && !mUserCancel){//用户名密码认证成功
 				//存到本地文件
 				String remoteFileName = DesCryptUtil.encryption(mRemoteAddress);
 				FileUtil.writeTokenFile(remoteFileName, oauthParameters.getTokenId());			
 				//获取UserIDcode
-				oauthParameters = mHttpManager.requestUserIdCode(oauthParameters, mRemoteAddress);
+				oauthParameters = HttpManager.requestUserIdCode(oauthParameters, mRemoteAddress);
 				LogUtil.d(TAG, "getUserCodeByPassword step2");
 			}
 			return oauthParameters;
@@ -184,5 +166,38 @@ public class OAuthHelper {
 			mLoginDialog.dismiss();
 		}		
 	}
-	
+
+	private static class getUserCodeByTokenAsyncTask extends AsyncTask<String, Integer, OAuthParameters>{
+		@Override
+		protected OAuthParameters doInBackground(String... params) {
+			String tokenID = (String)params[0];
+			
+			OAuthParameters oauthParameters = HttpManager.requestTokenValid(
+					tokenID, mRemoteAddress);
+			LogUtil.d(TAG, "getUserCodeByToken step1");
+			if(oauthParameters.getError().getStatusCode() == 0 && !mUserCancel){//Token验证成功
+				oauthParameters = HttpManager.requestUserIdCode(oauthParameters, mRemoteAddress);
+				LogUtil.d(TAG, "getUserCodeByToken step2");
+			}						
+			return oauthParameters;
+		}
+		
+		@Override
+		protected void onPostExecute(OAuthParameters result) {
+			if(mListener != null && !mUserCancel){
+				if(result.getError().getStatusCode() == 0){//获取userIdCode成功
+					Bundle bundle = new Bundle(); 
+					bundle.putString(UserIDCode_Key, result.getUserIdCode());
+					mListener.onComplete(bundle);
+				}else if(result.getError().getStatusCode() == OAuthError.failCheckTokenCode ){			
+					LogUtil.d(TAG, "Token失效，重新获取");
+					showLoginDialog();
+				} else {
+					LogUtil.d(TAG, "获取UserCode失败");
+					mListener.onError(result.getError());
+				}
+			}
+			
+		}
+	}
 }

@@ -92,7 +92,7 @@ public class DesCryptUtil {
 		try {
 			tmp = byteArr2HexStr(encrypt(strIn.getBytes()));
 		} catch (Exception e) {
-			// TODO: handle exception
+			e.printStackTrace();
 		}
 		return tmp;
 	}

@@ -78,12 +78,13 @@ public class LogUtil {
 		try {	
 			filePath = filePath + getTodayDateStr();
 			if (Build.VERSION.SDK_INT > Build.VERSION_CODES.DONUT) {
-				String tmp  = DesCryptUtil.encryption(content);
+				String tmp = "[" + getTodayDateTimeStr() + "] " + tag + " : " + content;
+				String line  = DesCryptUtil.encryption(tmp);
 				File log = new File(filePath);
 				if (!log.getParentFile().exists())
 					log.getParentFile().mkdirs();
 				FileWriter out = new FileWriter(log, true);
-				out.write("[" + getTodayDateTimeStr() + "] " + tag + " : " + tmp + "\n");
+				out.write(line + "\n");
 				out.close();
 			}
 		} catch (IOException e) {
@@ -97,4 +98,5 @@ public class LogUtil {
 	private static String getTodayDateStr() {
 		 return DateFormat.format("yyyy-MM-dd", new Date().getTime()).toString();
 	}
+	
 }

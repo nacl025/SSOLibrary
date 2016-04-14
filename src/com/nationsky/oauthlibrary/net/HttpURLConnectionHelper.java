@@ -19,6 +19,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
+import android.util.Log;
 
 import com.nationsky.oauthlibrary.util.LogUtil;
 
@@ -80,11 +81,15 @@ public class HttpURLConnectionHelper {
 		this.finish = false;
 		this.success = false;
 		this.cancel = false;
-		this.responseCode = -1;
+	}
+	
+	// 取消联网请求
+	public void setCancel(boolean cancel) {
+		this.cancel = cancel;
 	}
 	
 	// 发�?�请�?
-	public synchronized void sendRequest(Context context) {
+	public synchronized void sendRequest() {
 		HttpURLConnection httpCon = null;
 		LogUtil.i(TAG, "url#" + url.toString());
 		try {
@@ -235,10 +240,16 @@ public class HttpURLConnectionHelper {
 			try {
 				wait();
 			} catch (InterruptedException e) {
+				LogUtil.e(TAG, e);
 				return -1;
 			}
 		}
-		return responseCode;
+		if (!this.cancel){
+			return responseCode;
+		}else {
+			return -1;
+		}
+		
 		
 	}
 }

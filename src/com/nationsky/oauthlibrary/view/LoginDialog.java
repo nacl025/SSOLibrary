@@ -1,5 +1,8 @@
 package com.nationsky.oauthlibrary.view;
 
+import com.nationsky.oauthlibrary.util.LogUtil;
+
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
@@ -25,7 +28,8 @@ public class LoginDialog extends Dialog{
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_NO_TITLE);					
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		setCancelable(false);
 	}
 	
 	@Override
@@ -37,12 +41,14 @@ public class LoginDialog extends Dialog{
 		lp.width = dip2px(mContext,400); // 宽度  不设定宽高的话，无法设置垂直居中
 		lp.height = dip2px(mContext,300); // 高度
 		this.getWindow().setAttributes(lp);
-		
-		
+			
 		LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT,
 				LayoutParams.WRAP_CONTENT);	
 		addContentView(mView, params);
 	}
+	
+	
+	
 	
 	/**
 	 * 根据手机的分辨率从 dp 的单位 转成为 px(像素)
@@ -50,10 +56,5 @@ public class LoginDialog extends Dialog{
 	private int dip2px(Context context, float dpValue) {
 		final float scale = context.getResources().getDisplayMetrics().density;
 		return (int) (dpValue * scale + 0.5f);
-	}
-	
-	@Override
-	public void onBackPressed() {
-		return;
 	}
 }

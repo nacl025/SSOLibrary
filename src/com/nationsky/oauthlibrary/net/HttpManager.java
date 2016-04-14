@@ -1,6 +1,5 @@
 package com.nationsky.oauthlibrary.net;
 
-import android.content.Context;
 import android.text.TextUtils;
 
 import com.nationsky.oauthlibrary.OAuthError;
@@ -8,32 +7,11 @@ import com.nationsky.oauthlibrary.OAuthParameters;
 import com.nationsky.oauthlibrary.util.LogUtil;
 
 public class HttpManager {
-	private String TAG = "HttpManager";
-	private String mAddress = "211.90.37.6:8083";
-	private final String mCategories = "/am/identity/";
-	
-	private Context mContext;
-	private HttpURLConnectionHelper mHttp;
-	
-	private volatile static HttpManager singleton;
+	private static String TAG = "HttpManager";
+	private static String mAddress = "211.90.37.6:8083";
+	private final static String mCategories = "/am/identity/";
 
-	public static HttpManager getInstance(Context context) {
-		if (singleton == null) {
-			synchronized (HttpManager.class) {
-				if (singleton == null) {
-					singleton = new HttpManager(context);
-				}
-			}
-		}
-		return singleton;
-	}
-
-	private HttpManager(Context context) {
-		mContext = context;
-		mHttp = new HttpURLConnectionHelper();
-	}
-
-	public OAuthParameters requestToken(OAuthParameters oauthParameters, String... address){
+	public static OAuthParameters requestToken(OAuthParameters oauthParameters, String... address){
 		try {
 			StringBuilder sb = null;
 			sb = new StringBuilder("http://");
@@ -56,28 +34,28 @@ public class HttpManager {
 				if (tokenId.length > 1 && !tokenId[1].equals("")) {
 					oauthParameters.setTokenId(tokenId[1]);
 				}else {
-					OAuthError error = new OAuthError(100);
+					OAuthError error = new OAuthError(OAuthError.failCheckUserCode);
 					oauthParameters.setError(error);
 				}		
 			} else {
 				if (response.responseCode == HttpURLConnectionHelper.connectExceptionFlag) {
-					OAuthError error = new OAuthError(301);
+					OAuthError error = new OAuthError(OAuthError.erroConnectCode);
 					oauthParameters.setError(error);
 				} else {
-					OAuthError error = new OAuthError(100);
+					OAuthError error = new OAuthError(OAuthError.failCheckUserCode);
 					oauthParameters.setError(error);
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			LogUtil.e(TAG, e);
-			OAuthError error = new OAuthError(100);
+			OAuthError error = new OAuthError(OAuthError.failCheckUserCode);
 			oauthParameters.setError(error);
 		}	
 		return oauthParameters;
 	}
 	
-	public OAuthParameters requestTokenValid(String tokenId, String... address){
+	public static OAuthParameters requestTokenValid(String tokenId, String... address){
 		OAuthParameters oauthParameters = new OAuthParameters();
 		try {
 			StringBuilder sb = null;
@@ -102,28 +80,28 @@ public class HttpManager {
 				if (result.length > 1 && result[1].equals("true")) {
                    oauthParameters.setTokenId(tokenId);
 				} else {
-					OAuthError error = new OAuthError(101);
+					OAuthError error = new OAuthError(OAuthError.failCheckTokenCode);
 					oauthParameters.setError(error);
 				}		
 			} else {
 				if (response.responseCode == HttpURLConnectionHelper.connectExceptionFlag) {
-					OAuthError error = new OAuthError(301);
+					OAuthError error = new OAuthError(OAuthError.erroConnectCode);
 					oauthParameters.setError(error);
 				} else {
-					OAuthError error = new OAuthError(101);
+					OAuthError error = new OAuthError(OAuthError.failCheckTokenCode);
 					oauthParameters.setError(error);
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			LogUtil.e(TAG, e);
-			OAuthError error = new OAuthError(101);
+			OAuthError error = new OAuthError(OAuthError.failCheckTokenCode);
 			oauthParameters.setError(error);
 		}	
 		return oauthParameters;
 	}
 	
-	public OAuthParameters requestUserIdCode(OAuthParameters oauthParameters,
+	public static OAuthParameters requestUserIdCode(OAuthParameters oauthParameters,
 			String... address) {
 		try {
 			StringBuilder sb = null;
@@ -146,53 +124,59 @@ public class HttpManager {
 				if (userIdCode.length > 1 && !userIdCode[3].equals("")) {
 					oauthParameters.setUserIdCode(userIdCode[3]);
 				} else {
-					OAuthError error = new OAuthError(102);
+					OAuthError error = new OAuthError(OAuthError.failGetUserCodeCode);
 					oauthParameters.setError(error);
 				}
 			} else {
 				if (response.responseCode == HttpURLConnectionHelper.connectExceptionFlag) {
-					OAuthError error = new OAuthError(301);
+					OAuthError error = new OAuthError(OAuthError.erroConnectCode);
 					oauthParameters.setError(error);
 				} else {
-					OAuthError error = new OAuthError(102);
+					OAuthError error = new OAuthError(OAuthError.failGetUserCodeCode);
 					oauthParameters.setError(error);
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			LogUtil.e(TAG, e);
-			OAuthError error = new OAuthError(102);
+			OAuthError error = new OAuthError(OAuthError.failGetUserCodeCode);
 			oauthParameters.setError(error);
 		}
 		return oauthParameters;
 	}
 
-	private ResponseInfo sendRequest(String url){
+	private static ResponseInfo sendRequest(String url){
+		HttpURLConnectionHelper helper = new HttpURLConnectionHelper();
+		helper.setUrl(url);
+		helper.reset();		
+		HttpRequestThread thread = new HttpRequestThread(helper);
+		new Thread(thread).start();
 		
-		mHttp.setUrl(url);
-		mHttp.reset();
-		new Thread() {
-			@Override
-			public void run() {
-				try {
-					mHttp.sendRequest(mContext);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				
-			}
-		}.start();
 		ResponseInfo responseInfo = new ResponseInfo();		
-		responseInfo.responseCode = mHttp.getResponseCode();
-		byte[] responseByte = mHttp.getResponseBytes();
+		responseInfo.responseCode = helper.getResponseCode();
+		byte[] responseByte = helper.getResponseBytes();
 		if (responseByte != null)
 			responseInfo.responseString = new String(responseByte);
 		return responseInfo;
 	}
 
-	private class ResponseInfo{
+	private static class ResponseInfo{
 		public int responseCode;
 		public String responseString;
 	}
+	
+	private static class HttpRequestThread implements Runnable{
+		private HttpURLConnectionHelper mHelper;
+		public HttpRequestThread(HttpURLConnectionHelper helper) {
+			this.mHelper = helper;
+		}
+		public void run(){
+			try {
+				mHelper.sendRequest();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	};
 }
 
