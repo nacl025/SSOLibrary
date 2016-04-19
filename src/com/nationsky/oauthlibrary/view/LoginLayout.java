@@ -1,11 +1,7 @@
 package com.nationsky.oauthlibrary.view;
 
-import com.nationsky.oauthlibrary.OAuthParameters;
-
 import android.content.Context;
 import android.graphics.Color;
-import android.os.Handler;
-import android.os.Message;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -17,6 +13,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import com.nationsky.oauthlibrary.OAuthParameters;
 
 
 public class LoginLayout extends LinearLayout {

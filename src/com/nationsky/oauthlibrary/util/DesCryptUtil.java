@@ -1,12 +1,8 @@
 package com.nationsky.oauthlibrary.util;
 
 import java.security.Key;
-import java.security.SecureRandom;
 
 import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.DESKeySpec;
 
 public class DesCryptUtil {
 

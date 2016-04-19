@@ -1,42 +1,19 @@
 package com.nationsky.oauthlibrary;
 
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.view.View;
+
 import com.nationsky.oauthlibrary.net.HttpManager;
-import com.nationsky.oauthlibrary.net.HttpURLConnectionHelper;
 import com.nationsky.oauthlibrary.util.DesCryptUtil;
 import com.nationsky.oauthlibrary.util.FileUtil;
 import com.nationsky.oauthlibrary.util.LogUtil;
 import com.nationsky.oauthlibrary.view.ILoginListener;
 import com.nationsky.oauthlibrary.view.LoginDialog;
 import com.nationsky.oauthlibrary.view.LoginLayout;
-import com.nationsky.oauthlibrary.view.LoginWindow;
-
-import android.R.integer;
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface.OnKeyListener;
-import android.graphics.Color;
-import android.graphics.PixelFormat;
-import android.graphics.Typeface;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.text.TextUtils;
-import android.view.Gravity;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup.LayoutParams;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 public class OAuthHelper {	
 	private final static String TAG = "OAuthHelper";

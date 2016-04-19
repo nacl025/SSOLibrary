@@ -8,7 +8,7 @@ import com.nationsky.oauthlibrary.util.LogUtil;
 
 public class HttpManager {
 	private static String TAG = "HttpManager";
-	private static String mAddress = "211.90.37.6:8083";
+	private static String mAddress = "";
 	private final static String mCategories = "/am/identity/";
 
 	public static OAuthParameters requestToken(OAuthParameters oauthParameters, String... address){
