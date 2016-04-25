@@ -25,6 +25,12 @@ public class OAuthHelper {
 	private static IOAuthListener mListener;
 	private static boolean mUserCancel;
 			
+	/**
+	 * 用户认证（此方法必须为UI线程调用）
+	 * @param context
+	 * @param remoteAddress 认证服务地址
+	 * @param listener 认证结果监听
+	 */
 	public static void authorize(Activity context, String remoteAddress, IOAuthListener listener){
 		mContext = context;
 		mListener = listener;
@@ -104,6 +110,10 @@ public class OAuthHelper {
 		}
 	}
 	
+	/**
+	 * 注销
+	 * @param remoteAddress 认证服务地址
+	 */
 	public static void loginOut(String remoteAddress){
 		LogUtil.i(TAG, "loginout");
 		String remoteFileName = DesCryptUtil.encryption(remoteAddress);

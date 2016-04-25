@@ -7,7 +7,7 @@ import javax.crypto.Cipher;
 public class DesCryptUtil {
 
 	/** 字符串默认键值 长度要是8的倍数 */
-	private static String strDefaultKey = "edmundzy";
+	private final static String strDefaultKey = "edmundzy";
 
 	/**
 	 * 解密字节数组
